@@ -7,6 +7,7 @@ import pandas as pd
 import yfinance as yf
 
 from config import DEFAULT_FORWARD_DAYS, SCORED_DIR, WATCHLISTS_DIR, ensure_results_dirs
+from output_format import format_scored_output, normalize_known_columns
 
 
 LOOKBACK_BUFFER_DAYS = 10
@@ -131,6 +132,7 @@ def main():
     args = parse_args()
     input_path = args.input if args.input else latest_watchlist_path()
     df = pd.read_csv(input_path)
+    df = normalize_known_columns(df)
     if df.empty:
         raise SystemExit("Watchlist is empty.")
 
@@ -142,8 +144,9 @@ def main():
         scored_rows.append(merged)
 
     scored_df = pd.DataFrame(scored_rows)
+    export_df = format_scored_output(scored_df)
     output_path = SCORED_DIR / input_path.name
-    scored_df.to_csv(output_path, index=False, encoding="utf-8-sig")
+    export_df.to_csv(output_path, index=False, encoding="utf-8-sig")
     print(f"Scored CSV saved: {output_path}")
 
 
