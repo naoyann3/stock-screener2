@@ -78,7 +78,8 @@ def main():
     df = load_scored_data()
     df = df.dropna(subset=["day3_close_return_pct", "day5_close_return_pct"]).copy()
     if df.empty:
-        raise SystemExit("Scored data exists, but no rows have enough forward bars yet.")
+        print("Scored data exists, but no rows have enough forward bars yet.")
+        return
 
     summary_df = build_summary(df)
     flag_df = build_flag_report(df)
