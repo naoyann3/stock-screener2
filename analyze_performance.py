@@ -5,6 +5,7 @@ from datetime import datetime
 import pandas as pd
 
 from config import REPORTS_DIR, SCORED_DIR, ensure_results_dirs
+from output_format import normalize_known_columns
 
 
 RETURN_COLUMNS = [
@@ -65,7 +66,7 @@ def load_scored_data() -> pd.DataFrame:
     files = sorted(SCORED_DIR.glob("*.csv"))
     if not files:
         raise FileNotFoundError("No scored CSV found in results/scored.")
-    frames = [pd.read_csv(path) for path in files]
+    frames = [normalize_known_columns(pd.read_csv(path)) for path in files]
     return pd.concat(frames, ignore_index=True)
 
 
