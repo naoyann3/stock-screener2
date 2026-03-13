@@ -24,6 +24,7 @@ MIN_VOL_ACCEL_3_FOR_LOW_VOLUME_RATIO = 1.15
 MIN_CLOSE_POSITION_FOR_LOW_VOLUME_RATIO = 50.0
 MAX_BREAKOUT_GAP_PCT_5 = 1.0
 MAX_RESISTANCE_GAP_PCT_FOR_BREAKOUT = 3.0
+ALLOW_OVERHEATED_WITH_SIGNAL_ONLY = True
 
 
 def _offset_path():
@@ -309,6 +310,34 @@ def passes_watch_filter(row):
         if row["close_position_pct"] < MIN_CLOSE_POSITION_FOR_LOW_VOLUME_RATIO:
             return False
 
+    if row["event_pre_earnings_like"] == 1:
+        has_supportive_signal = any(
+            row[col] == 1
+            for col in (
+                "inst_accumulation",
+                "inst_accumulation_strong",
+                "absorption_candle",
+                "absorption_candle_strong",
+                "core_signal",
+            )
+        )
+        if not has_supportive_signal:
+            return False
+
+    # 過熱銘柄は、吸収や仕込みの裏付けが弱いなら除外
+    if ALLOW_OVERHEATED_WITH_SIGNAL_ONLY and row["is_overheated"] == 1:
+        has_supportive_signal = any(
+            row[col] == 1
+            for col in (
+                "inst_accumulation",
+                "inst_accumulation_strong",
+                "absorption_candle",
+                "absorption_candle_strong",
+            )
+        )
+        if not has_supportive_signal:
+            return False
+
     # 超過熱のみ除外
     if row["ma5_gap_pct"] > 18:
         return False
@@ -365,7 +394,7 @@ def score_row(row):
 
     # ===== 形 =====
     if row["near_breakout_5"] == 1:
-        structure_subscore += 2.5
+        structure_subscore += 2.0
 
     if row["resistance_gap_pct"] <= 5:
         structure_subscore += 1.5
@@ -391,22 +420,22 @@ def score_row(row):
 
     # ===== 大口・吸収 =====
     if row["inst_accumulation"] == 1:
-        structure_subscore += 4.0
+        structure_subscore += 4.8
 
     if row["inst_accumulation_strong"] == 1:
-        structure_subscore += 5.0
+        structure_subscore += 5.8
 
     if row["smart_money_absorb"] == 1:
         structure_subscore += 1.8
 
     if row["absorption_candle"] == 1:
-        structure_subscore += 2.5
+        structure_subscore += 3.6
 
     if row["absorption_candle_strong"] == 1:
-        structure_subscore += 4.0
+        structure_subscore += 5.0
 
     if row["event_pre_earnings_like"] == 1:
-        structure_subscore += 1.0
+        penalty_subscore -= 1.2
 
     if row["core_signal"] == 1:
         structure_subscore += 0.8
@@ -423,7 +452,7 @@ def score_row(row):
 
     # ===== 過熱 =====
     if row["is_overheated"] == 1:
-        penalty_subscore -= 2.0
+        penalty_subscore -= 3.5
 
     total = (
         volume_subscore +
@@ -455,13 +484,14 @@ def add_entry_priority(df):
     df.loc[df["raw_rank"].between(4, 5), "entry_priority_score"] += 0.8
 
     # 仕込み・吸収を優遇
-    df.loc[df["inst_accumulation"] == 1, "entry_priority_score"] += 1.5
-    df.loc[df["inst_accumulation_strong"] == 1, "entry_priority_score"] += 2.0
-    df.loc[df["absorption_candle"] == 1, "entry_priority_score"] += 1.2
-    df.loc[df["absorption_candle_strong"] == 1, "entry_priority_score"] += 1.8
+    df.loc[df["inst_accumulation"] == 1, "entry_priority_score"] += 2.0
+    df.loc[df["inst_accumulation_strong"] == 1, "entry_priority_score"] += 2.6
+    df.loc[df["absorption_candle"] == 1, "entry_priority_score"] += 2.0
+    df.loc[df["absorption_candle_strong"] == 1, "entry_priority_score"] += 2.8
 
-    # 過熱は減点
-    df.loc[df["is_overheated"] == 1, "entry_priority_score"] -= 1.5
+    # 過熱とイベント先行感は減点
+    df.loc[df["is_overheated"] == 1, "entry_priority_score"] -= 3.0
+    df.loc[df["event_pre_earnings_like"] == 1, "entry_priority_score"] -= 1.5
 
     df = df.sort_values("entry_priority_score", ascending=False).reset_index(drop=True)
     df["entry_rank"] = range(1, len(df) + 1)
