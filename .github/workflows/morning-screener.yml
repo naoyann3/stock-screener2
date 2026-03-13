@@ -1,0 +1,52 @@
+name: Morning Stock Screener
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 11 * * 1-5"
+
+jobs:
+  run-screener:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      TZ: Asia/Tokyo
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas yfinance
+
+      - name: Set run date
+        run: echo "RUN_DATE=$(date +%F)" >> $GITHUB_ENV
+
+      - name: Run screener
+        run: python screener.py
+
+      - name: Score latest watchlist
+        run: python score_watchlist.py
+
+      - name: Analyze accumulated performance
+        continue-on-error: true
+        run: python analyze_performance.py
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: screener-results-${{ env.RUN_DATE }}
+          path: |
+            morning_watchlist.csv
+            universe_offset.txt
+            results/watchlists/*.csv
+            results/scored/*.csv
+            results/reports/*.csv
