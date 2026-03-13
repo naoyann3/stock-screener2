@@ -28,6 +28,38 @@ FLAG_COLUMNS = [
     "is_overheated",
 ]
 
+SUMMARY_LABELS = {
+    "sample_count": "サンプル数",
+    "win_rate_day3_pct": "3日後勝率_pct",
+    "win_rate_day5_pct": "5日後勝率_pct",
+    "avg_day1_high_return_pct": "翌日高値平均リターン_pct",
+    "avg_day3_close_return_pct": "3日後終値平均リターン_pct",
+    "avg_day5_close_return_pct": "5日後終値平均リターン_pct",
+    "avg_max_drawdown_5d_pct": "5日最大DD平均_pct",
+    "avg_max_runup_5d_pct": "5日最大上昇平均_pct",
+}
+
+FLAG_LABELS = {
+    "flag": "条件名",
+    "sample_count": "サンプル数",
+    "win_rate_day3_pct": "3日後勝率_pct",
+    "avg_day1_high_return_pct": "翌日高値平均リターン_pct",
+    "avg_day3_close_return_pct": "3日後終値平均リターン_pct",
+    "avg_day5_close_return_pct": "5日後終値平均リターン_pct",
+    "avg_max_drawdown_5d_pct": "5日最大DD平均_pct",
+}
+
+FLAG_NAME_LABELS = {
+    "near_breakout_5": "5日高値接近",
+    "event_pre_earnings_like": "イベント前っぽい形",
+    "core_signal": "コアシグナル",
+    "inst_accumulation": "機関仕込み",
+    "inst_accumulation_strong": "強い機関仕込み",
+    "absorption_candle": "吸収ローソク",
+    "absorption_candle_strong": "強い吸収ローソク",
+    "is_overheated": "過熱",
+}
+
 
 def load_scored_data() -> pd.DataFrame:
     files = sorted(SCORED_DIR.glob("*.csv"))
@@ -61,7 +93,7 @@ def build_flag_report(df: pd.DataFrame) -> pd.DataFrame:
             continue
         rows.append(
             {
-                "flag": col,
+                "flag": FLAG_NAME_LABELS.get(col, col),
                 "sample_count": len(subset),
                 "win_rate_day3_pct": round((subset["day3_close_return_pct"] > 0).mean() * 100, 4),
                 "avg_day1_high_return_pct": round(subset["day1_high_return_pct"].mean(), 4),
@@ -83,20 +115,22 @@ def main():
 
     summary_df = build_summary(df)
     flag_df = build_flag_report(df)
+    summary_export_df = summary_df.rename(columns=SUMMARY_LABELS)
+    flag_export_df = flag_df.rename(columns=FLAG_LABELS)
 
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     summary_path = REPORTS_DIR / f"summary_{stamp}.csv"
     flags_path = REPORTS_DIR / f"flags_{stamp}.csv"
-    summary_df.to_csv(summary_path, index=False, encoding="utf-8-sig")
-    flag_df.to_csv(flags_path, index=False, encoding="utf-8-sig")
+    summary_export_df.to_csv(summary_path, index=False, encoding="utf-8-sig")
+    flag_export_df.to_csv(flags_path, index=False, encoding="utf-8-sig")
 
     print("=== Overall Summary ===")
-    print(summary_df.to_string(index=False))
+    print(summary_export_df.to_string(index=False))
     print(f"\nSaved: {summary_path}")
 
     if not flag_df.empty:
         print("\n=== Flag Breakdown ===")
-        print(flag_df.to_string(index=False))
+        print(flag_export_df.to_string(index=False))
         print(f"\nSaved: {flags_path}")
 
 
