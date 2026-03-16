@@ -636,7 +636,7 @@ def run():
     if screen_date is None:
         screen_date = pd.Timestamp(output_df["run_date"].max()).date()
 
-    print("\n==== Morning Watchlist v3 ====")
+    print(f"\n==== Morning Watchlist {SCREEN_VERSION} ====")
     print(export_df.to_string(index=False))
 
     latest_output_path = _latest_output_path()
