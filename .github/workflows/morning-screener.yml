@@ -17,6 +17,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Prepare persisted directories
+        run: |
+          mkdir -p results/watchlists
+          mkdir -p results/scored
+          mkdir -p results/reports
+
+      - name: Restore screener history
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            universe_offset.txt
+            results/watchlists
+            results/scored
+            results/reports
+          key: morning-screener-history-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            morning-screener-history-${{ github.ref_name }}-
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -40,7 +58,19 @@ jobs:
         continue-on-error: true
         run: python analyze_performance.py
 
+      - name: Save screener history
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            universe_offset.txt
+            results/watchlists
+            results/scored
+            results/reports
+          key: morning-screener-history-${{ github.ref_name }}-${{ github.run_id }}
+
       - name: Upload artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: screener-results-${{ env.RUN_DATE }}
