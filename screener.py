@@ -5,7 +5,7 @@ import yfinance as yf
 from pathlib import Path
 
 from config import WATCHLISTS_DIR, SCREEN_VERSION, ensure_results_dirs
-from output_format import format_watchlist_output
+from output_format import format_watchlist_latest_output, format_watchlist_output
 
 TICKERS_CSV = "tickers.csv"
 OUTPUT_CSV = "morning_watchlist.csv"
@@ -633,18 +633,19 @@ def run():
     ]
 
     output_df = df[watch_cols].head(TOP_N_OUTPUT).copy()
-    export_df = format_watchlist_output(output_df)
+    latest_export_df = format_watchlist_latest_output(output_df)
+    history_export_df = format_watchlist_output(output_df)
 
     if screen_date is None:
         screen_date = pd.Timestamp(output_df["run_date"].max()).date()
 
     print(f"\n==== Morning Watchlist {SCREEN_VERSION} ====")
-    print(export_df.to_string(index=False))
+    print(latest_export_df.to_string(index=False))
 
     latest_output_path = _latest_output_path()
     dated_output_path = WATCHLISTS_DIR / f"{screen_date.isoformat()}_{SCREEN_VERSION}_{run_stamp}.csv"
-    export_df.to_csv(latest_output_path, index=False, encoding="utf-8-sig")
-    export_df.to_csv(dated_output_path, index=False, encoding="utf-8-sig")
+    latest_export_df.to_csv(latest_output_path, index=False, encoding="utf-8-sig")
+    history_export_df.to_csv(dated_output_path, index=False, encoding="utf-8-sig")
     print(f"\nCSV出力完了: {latest_output_path.name}")
     print(f"履歴保存完了: {dated_output_path}")
 
