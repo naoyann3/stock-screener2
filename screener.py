@@ -505,7 +505,9 @@ def run():
     rows = []
     total = len(tickers)
     screen_date = None
-    generated_at = datetime.now().isoformat(timespec="seconds")
+    run_started_at = datetime.now()
+    generated_at = run_started_at.isoformat(timespec="seconds")
+    run_stamp = run_started_at.strftime("%Y%m%d_%H%M%S")
 
     for i, r in tickers.iterrows():
         ticker = r["ticker"]
@@ -640,7 +642,7 @@ def run():
     print(export_df.to_string(index=False))
 
     latest_output_path = _latest_output_path()
-    dated_output_path = WATCHLISTS_DIR / f"{screen_date.isoformat()}_{SCREEN_VERSION}.csv"
+    dated_output_path = WATCHLISTS_DIR / f"{screen_date.isoformat()}_{SCREEN_VERSION}_{run_stamp}.csv"
     export_df.to_csv(latest_output_path, index=False, encoding="utf-8-sig")
     export_df.to_csv(dated_output_path, index=False, encoding="utf-8-sig")
     print(f"\nCSV出力完了: {latest_output_path.name}")
