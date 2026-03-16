@@ -62,7 +62,7 @@ COLUMN_LABELS = {
 
 LABEL_TO_COLUMN = {ja: en for en, ja in COLUMN_LABELS.items()}
 
-WATCHLIST_COLUMN_ORDER = [
+WATCHLIST_LATEST_COLUMN_ORDER = [
     "判定日",
     "注目順位",
     "注目度スコア",
@@ -85,6 +85,53 @@ WATCHLIST_COLUMN_ORDER = [
     "トレンドスコア",
     "形状スコア",
     "減点スコア",
+]
+
+WATCHLIST_HISTORY_COLUMN_ORDER = [
+    "判定日",
+    "注目順位",
+    "注目度スコア",
+    "ティッカー",
+    "銘柄名",
+    "過熱",
+    "吸収ローソク",
+    "強い吸収ローソク",
+    "吸収サイン",
+    "機関仕込み",
+    "強い機関仕込み",
+    "コアシグナル",
+    "5日高値接近",
+    "イベント前っぽい形",
+    "総合スコア",
+    "終値",
+    "売買代金(百万円)",
+    "出来高倍率",
+    "出来高加速3日",
+    "引け位置(%)",
+    "前日騰落率(%)",
+    "5日騰落率(%)",
+    "5日線乖離(%)",
+    "当日値幅(%)",
+    "上ヒゲ(%)",
+    "下ヒゲ(%)",
+    "実体(%)",
+    "レジスタンス差(%)",
+    "元スコア順位",
+    "出来高スコア",
+    "トレンドスコア",
+    "形状スコア",
+    "流動性スコア",
+    "減点スコア",
+    "出来高",
+    "前日出来高",
+    "前日出来高20日平均超",
+    "前日出来高倍率(20日)",
+    "5日線傾き(%)",
+    "10日線傾き(%)",
+    "25日線傾き(%)",
+    "スクリーナー版",
+    "ユニバース位置",
+    "生成日時",
 ]
 
 SCORED_EXTRA_ORDER = [
@@ -120,10 +167,15 @@ def _apply_order(df: pd.DataFrame, ordered_labels: list[str]) -> pd.DataFrame:
 
 def format_watchlist_output(df: pd.DataFrame) -> pd.DataFrame:
     display_df = df.rename(columns=COLUMN_LABELS)
-    return _apply_order(display_df, WATCHLIST_COLUMN_ORDER)
+    return _apply_order(display_df, WATCHLIST_HISTORY_COLUMN_ORDER)
+
+
+def format_watchlist_latest_output(df: pd.DataFrame) -> pd.DataFrame:
+    display_df = df.rename(columns=COLUMN_LABELS)
+    return display_df[[col for col in WATCHLIST_LATEST_COLUMN_ORDER if col in display_df.columns]]
 
 
 def format_scored_output(df: pd.DataFrame) -> pd.DataFrame:
     display_df = df.rename(columns=COLUMN_LABELS)
-    ordered = WATCHLIST_COLUMN_ORDER + [col for col in SCORED_EXTRA_ORDER if col not in WATCHLIST_COLUMN_ORDER]
+    ordered = WATCHLIST_HISTORY_COLUMN_ORDER + [col for col in SCORED_EXTRA_ORDER if col not in WATCHLIST_HISTORY_COLUMN_ORDER]
     return _apply_order(display_df, ordered)
